@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  labels:
+    io.kompose.service: termite-app
+  name: termite-app
+spec:
+  selector:
+    matchLabels:
+      name: termite-pod
+      app: termite-app
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: termite-pod
+        app: termite-app
+    spec:
+      containers:
+      - env:
+        - name: _JAVA_OPTIONS
+          value: -Xmx14g -Xms14g
+        image: scibite/termite:6.4.92-dicts
+        name: termite-app
+        ports:
+        - containerPort: 9090
+        resources:
+          requests:
+            cpu: "4"
+            memory: 20Gi
+          limits:
+            cpu: "4"
+            memory: 20Gi
+        volumeMounts:
+        - mountPath: /data/termite.lic
+          name: termite-app-claim0
+        #- mountPath: /data/termite.lic
+        #  name: termite-app-claim0
+        - mountPath: /data/termite_work_dir/admin
+          name: termite-app-claim1
+        - mountPath: /data/termite_work_dir/state
+          name: termite-app-claim2
+        - mountPath: /data/TERMITEJ_DICT2
+          name: termite-app-claim3
+      restartPolicy: Always
+      volumes:
+      - name: termite-app-claim0
+        configMap:
+          name: termite-license
+      #- name: termite-app-claim0
+      #  hostPath:
+      #    path: /home/ec2-user/termite.lic
+      #    type: FileOrCreate
+      - name: termite-app-claim1
+        hostPath:
+          path: /data/admin
+          type: DirectoryOrCreate
+      - name: termite-app-claim2
+        hostPath:
+          path: /data/state
+          type: DirectoryOrCreate
+      - name: termite-app-claim3
+        hostPath:
+          path: /data/termite/added_dictionaries
+          type: DirectoryOrCreate
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  labels:
+    io.kompose.service: termite-app
+  name: termite-app
+spec:
+  ports:
+  - name: "9090"
+    port: 9090
+    targetPort: 9090
+  selector:
+    io.kompose.service: termite-app
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+data:
+  termite.lic: |-
+    {
+      "LICENCE_FILE_VERSION": "1.5",
+      "user": "michael nobile ",
+      "inst_code": "0533883298F412AE17993C5FCAF03AAEBD0AD6DD1AB9EB6C5107A6E7DADC5304",
+      "ent_code": "3B6AFE6154985A525814A7455B30ADBC58624B3C160BF3A93BACB35A1CAB4B774C86E547A74B6A96",
+      "map_code": "1C66CE67A59023D50AE48E8382A23F83E9992D94DA3F34E1E6130A016E291E47364F8C8283E84EB7",
+      "granted": "January 11, 2022 at 5:59:43 PM GMT",
+      "dcode": "1641923983513",
+      "ncode": "63C284E5D953F38685B067EF999B99F02ABA8C6C9E462A0B6BFC6F5C68B3DCBB",
+      "expires": "April 11, 2022 at 5:59:43 PM GMT",
+      "genable": "1a3d5bf3fa017430e0b00ee2fd1fd1b3",
+      "msl": "51ec6f4bbf7237ddbb5c4ecdee2e7e81",
+      "rights": "func.scf,func.inxights,func.dev,pack.genphen,func.vic,docstore.dept,pack.core,pack.cmc,pack.agro,scf.nihgrant,func.xlign,docstore.multi,scf.ctgov,func.vet,pack.allot,func.mtserve,scf.medline,func.unisuite,docstore.ent,pack.cdisc,docstore.news,scf.epo,pack.base,scf.sharepoint,func.forms,func.pipeline,pack.pharma,pack.busin,scf.rss,func.termite,scf.bing,func.sysadmin1,pack.meddra,scf.filesystem,func.docstore,func.batch,pack.pathol,func.scinav,func.texpress,pack.clinical,scf.pmc",
+      "sobj": "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",
+      "accept": "true; Accepted: Tue Jan 11 17:59:43 UTC 2022"
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2022-04-01T15:08:17Z"
+  name: termite-license
+  namespace: default
+  resourceVersion: "69183"
+  uid: cbc1df40-d269-4e63-8017-cef7d6a0164f

@@ -1,0 +1,12 @@
+# Default values for Ingress.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+domain: ""  #customer domain URL
+external_access: true # if the load balancer wheather internal or external
+certificateArn: "" # SSL ARN
+ingress_cidrs: "" # CIDR's comma seperated
+lb_log_s3_bucket: "" # S3 bucket name if need log to enable on alb
+lb_log_prefix: "" #S3 log prefix
+namespace: "default" #namespace
+tags: "" #tags

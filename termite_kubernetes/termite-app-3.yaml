@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  labels:
+    io.kompose.service: termite-app
+  name: termite-app
+spec:
+  selector:
+    matchLabels:
+      name: termite-pod
+      app: termite-app
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: termite-pod
+        app: termite-app
+    spec:
+      containers:
+      - env:
+        - name: _JAVA_OPTIONS
+          value: -Xmx16g -Xms16g
+        image: scibite/termite:6.4.86-dicts
+        name: termite-app
+        ports:
+        - containerPort: 9090
+        resources: {}
+        volumeMounts:
+        - mountPath: /data/termite.lic
+          name: termite-app-claim0
+        - mountPath: /data/termite_work_dir/admin
+          name: termite-app-claim1
+        - mountPath: /data/termite_work_dir/state
+          name: termite-app-claim2
+        - mountPath: /data/TERMITEJ_DICT2
+          name: termite-app-claim3
+      restartPolicy: Always
+      volumes:
+      - name: termite-app-claim0
+        hostPath:
+          path: /home/mnobile/termite.lic
+          type: FileOrCreate
+      - name: termite-app-claim1
+        hostPath:
+          path: /data/admin
+          type: DirectoryOrCreate
+      - name: termite-app-claim2
+        hostPath:
+          path: /data/state
+          type: DirectoryOrCreate
+      - name: termite-app-claim3
+        hostPath:
+          path: /data/termite/added_dictionaries
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  labels:
+    io.kompose.service: termite-app
+  name: termite-app
+spec:
+  ports:
+  - name: "9090"
+    port: 9090
+    targetPort: 9090
+  selector:
+    io.kompose.service: termite-app
+status:
+  loadBalancer: {}

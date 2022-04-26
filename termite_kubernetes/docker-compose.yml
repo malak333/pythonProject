@@ -1,0 +1,14 @@
+version: '3'
+services:
+  termite-app:
+    image: scibite/termite:6.4.86-dicts
+    environment:
+      - _JAVA_OPTIONS=-Xmx14g -Xms14g
+    volumes:
+      - /home/mnobile/termite.lic:/data/termite.lic
+      - /data/admin:/data/termite_work_dir/admin
+      - /data/state:/data/termite_work_dir/state
+      - /data/termite/added_dictionaries:/data/TERMITEJ_DICT2
+    ports:
+      - 9090:9090
+    restart: always
